@@ -5,11 +5,9 @@
   Add a WhatsApp number only after Minal confirms which number should be public.
 */
 const SITE_CONFIG = {
-  bookingUrl: "",
-  whatsappNumber: "",
-  phoneDisplay: "9922217290",
-  phoneHref: "+919922217290",
-  email: "minal.marudkar@gmail.com"
+  bookingUrl: "", // Optional appointment system (enable only when confirmed)
+  whatsappNumber: "", // Optional public WhatsApp handle (enable only with consent)
+  email: "minal.marudkar@gmail.com" // Used by the mailto contact form
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,30 +26,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
+
+  const navGroups = document.querySelectorAll('.nav-group');
+  const collapseGroups = (except = null) => navGroups.forEach(group => {
+    if (group === except) return;
+    group.classList.remove('expanded');
+    group.querySelector('.nav-trigger')?.setAttribute('aria-expanded', 'false');
+  });
+  navGroups.forEach(group => {
+    const trigger = group.querySelector('.nav-trigger');
+    trigger?.addEventListener('click', () => {
+      const willOpen = !group.classList.contains('expanded');
+      collapseGroups(group);
+      group.classList.toggle('expanded', willOpen);
+      trigger.setAttribute('aria-expanded', String(willOpen));
+    });
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.nav-group')) collapseGroups();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      collapseGroups();
+      if (nav?.classList.contains('open')) {
+        nav.classList.remove('open');
+        menuButton?.setAttribute('aria-expanded', 'false');
+        menuButton?.focus();
+      }
+    }
+  });
+
   document.querySelectorAll('[data-booking]').forEach(link => {
     if (SITE_CONFIG.bookingUrl) {
       link.href = SITE_CONFIG.bookingUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
     } else {
-      link.href = '#';
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
-        alert('The direct appointment-booking link will be connected here before launch.');
-      });
+      link.href = 'contact.html'; // No dead or misleading booking buttons
     }
-  });
-
-  document.querySelectorAll('[data-phone]').forEach(link => {
-    link.href = `tel:${SITE_CONFIG.phoneHref}`;
-    const target = link.querySelector('[data-phone-text]');
-    if (target) target.textContent = SITE_CONFIG.phoneDisplay;
-  });
-
-  document.querySelectorAll('[data-email]').forEach(link => {
-    link.href = `mailto:${SITE_CONFIG.email}`;
-    const target = link.querySelector('[data-email-text]');
-    if (target) target.textContent = SITE_CONFIG.email;
   });
 
   document.querySelectorAll('[data-whatsapp]').forEach(link => {
@@ -83,11 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = new FormData(form);
       const name = (data.get('name') || '').toString().trim();
       const contact = (data.get('contact') || '').toString().trim();
-      const preference = (data.get('preference') || '').toString().trim();
       const note = (data.get('note') || '').toString().trim();
       const subject = encodeURIComponent(`Website enquiry${name ? ` from ${name}` : ''}`);
       const body = encodeURIComponent(
-        `Name: ${name}\nContact: ${contact}\nPreferred reply: ${preference}\n\nMessage:\n${note}\n\nPlease note: This enquiry was sent from the public website and should not contain confidential clinical information.`
+        `Name: ${name}\nContact email: ${contact}\n\nMessage:\n${note}\n\nPlease note: This enquiry was sent from the public website and should not contain confidential clinical information.`
       );
       window.location.href = `mailto:${SITE_CONFIG.email}?subject=${subject}&body=${body}`;
     });
