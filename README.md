@@ -71,3 +71,7 @@ New articles, workshop dates, downloads, WhatsApp, booking and payments can be a
 - Pruned unused alternate photo files, the unused supplied QR source copy and Python cache. Original logo illustration used by the site and the flyer remain intact.
 - Don't extract this ZIP into an already existing `minal-portfolio` directory. Extract it into the **parent directory** to prevent `minal-portfolio/minal-portfolio`. Back up your old directory first.
 - Because pre-launch legacy redirect stubs have been removed, old direct `.html` URLs will not redirect. If there are existing external bookmarks to those addresses, restore compatibility redirects before going live.
+
+## Hostinger SEO launch preparation
+
+SEO metadata is reviewed and refined. See `HOSTINGER-LAUNCH.md` for step-by-step deployment instructions and `publish_setup.py` for the final domain-dependent canonical URLs, JSON-LD, sitemap, and social image URLs. Do not run `publish_setup.py` until Minal’s real domain is confirmed.
