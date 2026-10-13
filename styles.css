@@ -583,3 +583,16 @@ html { scroll-padding-top:112px; }
 .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible, .contact-option:focus-visible, .flyer-image-link:focus-visible, .footer-links a:focus-visible { outline:3px solid var(--sage-dark); outline-offset:3px; }
 @media (max-width: 850px) { .flyer-layout { grid-template-columns:1fr; } .flyer-image-link {max-width:480px;} }
 @media (max-width: 560px) { .brand-mark { width:40px;height:40px; flex-basis:40px; } .brand-role {letter-spacing:.07em;} .telegram-qr-card {flex-direction:column;align-items:flex-start;} .telegram-qr-card img {width:160px;height:160px;} }
+
+.brand-role {
+  font-size: 0.61rem;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .brand-role {
+    font-size: 0.53rem;
+    letter-spacing: 0.02em;
+  }
+}
