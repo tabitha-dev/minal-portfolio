@@ -3,11 +3,13 @@
 
 Usage (from inside minal-portfolio):
     python publish_setup.py https://ACTUAL-MINAL-DOMAIN/
+    python publish_setup.py https://ACTUAL-DOMAIN/repository/  # optional project path
 
 Writes canonical URLs, absolute social preview URLs, JSON-LD identity and
-page breadcrumbs, sitemap.xml and the sitemap line in robots.txt. Safe to
-rerun with the corrected domain if it ever changes. Never run with the
-GitHub Pages preview URL as the final domain.
+page breadcrumbs, and sitemap.xml. A sitemap reference is written to
+robots.txt only when the site is hosted at the domain root. Safe to rerun
+with the corrected domain if it ever changes. Never run with the GitHub
+Pages preview URL as the final domain.
 """
 import html
 import ipaddress
@@ -23,8 +25,12 @@ if len(sys.argv) != 2:
     raise SystemExit("Usage: python publish_setup.py https://YOUR-ACTUAL-DOMAIN/  (wait until domain is known)")
 raw = sys.argv[1].strip()
 url = urlsplit(raw)
-if url.scheme != 'https' or not url.hostname or url.username or url.password or url.port or url.query or url.fragment or url.path not in ('','/'):
-    raise SystemExit("Enter the actual production HTTPS domain root, e.g. https://your-real-domain.tld/ (no /minal-portfolio/ subpath)")
+raw_path = url.path
+path = url.path.rstrip('/')
+segments = path[1:].split('/') if path else []
+invalid_path = raw_path not in ('','/') and (not path or raw_path.startswith('//') or raw_path.endswith('//') or any(not re.fullmatch(r'[A-Za-z0-9_-][A-Za-z0-9._~-]*', segment) for segment in segments))
+if url.scheme != 'https' or not url.hostname or url.username or url.password or url.port or url.query or url.fragment or invalid_path:
+    raise SystemExit("Enter the actual production HTTPS URL, with an optional simple path prefix, e.g. https://your-real-domain.tld/repository/")
 host = url.hostname.lower()
 if host in ('localhost','example.com','www.example.com','yourdomain.com','your-domain.com','www.example-domain.in') or host.endswith(('.localhost','.local','.test','.invalid','.example','.github.io','.hostingerapp.com')) or '.' not in host:
     raise SystemExit("Please use Minal's REAL public domain, not GitHub preview, localhost, a placeholder, or a temporary address.")
@@ -34,7 +40,7 @@ except ValueError:
     pass
 else:
     raise SystemExit("Enter a domain name, not an IP address.")
-base = urlunsplit(('https',url.netloc,'/','',''))
+base = urlunsplit(('https',url.netloc,path+'/','',''))
 page_names = ['', 'about','services','support','resources','workplace','book-research','insights','shop','contact','privacy']
 labels={'about':'About Minal','services':'Psychology & Well-being Services','support':'Areas of Support','resources':'Mental Well-being Resources','workplace':'HR & Workplace','book-research':'Book & Research','insights':'Insights & Updates','shop':'Psychology Shop','contact':'Contact Minal','privacy':'Privacy & Website Notice'}
 pages=[(root / ('index.html' if not s else s+'/index.html'), s) for s in page_names]
@@ -89,6 +95,9 @@ for _,slug in pages:
     SubElement(entry,'loc').text=base+(slug+'/' if slug else '')
 indent(sitemap,space='  ')
 ElementTree(sitemap).write(root/'sitemap.xml',encoding='utf-8',xml_declaration=True)
-(root/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+base+'sitemap.xml\n',encoding='utf-8')
-print('SEO READY FOR',base,'|',len(pages),'pages | sitemap.xml and robots.txt updated')
+if not path:
+    (root/'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: '+base+'sitemap.xml\n',encoding='utf-8')
+else:
+    print('For project subpaths, submit the sitemap in Search Console; root robots.txt was not changed.')
+print('SEO READY FOR',base,'|',len(pages),'pages | sitemap.xml generated')
 print('NEXT: Upload the CONTENTS of minal-portfolio into Hostinger public_html, and verify the actual pages.')
