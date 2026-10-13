@@ -1,13 +1,12 @@
-/*
-  SITE CONFIGURATION
-  ------------------
-  Paste the external appointment link into bookingUrl before launch.
-  Add a WhatsApp number only after Minal confirms which number should be public.
-*/
+/* Keep direct /index.html URLs visually clean while preserving the host's subpath. */
+if (window.location.pathname.endsWith('/index.html')) {
+  const cleanPath = window.location.pathname.slice(0, -'index.html'.length);
+  window.history.replaceState(null, '', cleanPath + window.location.search + window.location.hash);
+}
+
+/* Contact uses a Telegram public username; no form backend or visitor data storage. */
 const SITE_CONFIG = {
-  bookingUrl: "", // Optional appointment system (enable only when confirmed)
-  whatsappNumber: "", // Optional public WhatsApp handle (enable only with consent)
-  email: "minal.marudkar@gmail.com" // Used by the mailto contact form
+  telegramUsername: 'Psychologist_Minal'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -56,25 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.querySelectorAll('[data-booking]').forEach(link => {
-    if (SITE_CONFIG.bookingUrl) {
-      link.href = SITE_CONFIG.bookingUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-    } else {
-      link.href = 'contact.html'; // No dead or misleading booking buttons
-    }
-  });
-
-  document.querySelectorAll('[data-whatsapp]').forEach(link => {
-    if (!SITE_CONFIG.whatsappNumber) {
-      link.hidden = true;
-      return;
-    }
-    link.href = `https://wa.me/${SITE_CONFIG.whatsappNumber.replace(/\D/g, '')}`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-  });
 
   document.querySelectorAll('[data-year]').forEach(el => {
     el.textContent = new Date().getFullYear();
@@ -92,15 +72,23 @@ document.addEventListener('DOMContentLoaded', () => {
   if (form) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
+      if (!form.reportValidity()) return;
       const data = new FormData(form);
-      const name = (data.get('name') || '').toString().trim();
-      const contact = (data.get('contact') || '').toString().trim();
-      const note = (data.get('note') || '').toString().trim();
-      const subject = encodeURIComponent(`Website enquiry${name ? ` from ${name}` : ''}`);
-      const body = encodeURIComponent(
-        `Name: ${name}\nContact email: ${contact}\n\nMessage:\n${note}\n\nPlease note: This enquiry was sent from the public website and should not contain confidential clinical information.`
-      );
-      window.location.href = `mailto:${SITE_CONFIG.email}?subject=${subject}&body=${body}`;
+      const name = String(data.get('name') || '').trim().slice(0, 80);
+      const topic = String(data.get('topic') || '').trim();
+      const allowedTopics = ['General enquiry', 'Support & consultations', 'Workplace well-being', 'Resources & research', 'Other'];
+      if (!name || !allowedTopics.includes(topic)) return;
+      const note = String(data.get('note') || '').trim().slice(0, 500);
+      const message = [
+        `Hello Minal, I am ${name}.`,
+        `I am contacting you from your website about: ${topic}.`,
+        note ? `My enquiry: ${note}` : 'Could you please let me know how to proceed?',
+        'Thank you.'
+      ].join('\n\n');
+      const url = `https://t.me/${SITE_CONFIG.telegramUsername}?text=${encodeURIComponent(message)}`;
+      const status = form.querySelector('[data-form-status]');
+      if (status) status.textContent = 'Opening Telegram with your draft. Please press Send there to deliver your message.';
+      window.location.assign(url); // User must send the message from Telegram.
     });
   }
 
